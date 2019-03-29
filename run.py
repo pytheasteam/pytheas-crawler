@@ -16,12 +16,12 @@ def main():
     collection = db_client[db.DB][db.ARTICLE_COLLECTION]
 
     store = MongoItemStore(
-        host='ds215633.mlab.com',
-        port='15633',
-        db='pytheas',
-        article_collection='restaurants',
-        username='pytheas',
-        password='pytheas1'
+        host=db.HOST,
+        port=db.PORT,
+        db=db.DB,
+        article_collection=db.ARTICLE_COLLECTION,
+        username=db.USERNAME,
+        password=db.PASSWORD
     )
 
     parser_mapping = {}
