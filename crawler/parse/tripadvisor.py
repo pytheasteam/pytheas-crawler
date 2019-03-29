@@ -1,10 +1,9 @@
 import re
 from urllib.parse import urljoin
-
 import requests
 from bs4 import BeautifulSoup
 
-from crawler.models import Attraction, Review, Restaurant
+from crawler.models import Attraction, Restaurant
 from crawler.parse.abstractions import WebsiteParserBase
 
 traveler_types = {
@@ -174,13 +173,16 @@ class AttractionParser(WebsiteParserBase):
                     'reviews': self._parse_reviews(url)
                 }
                 tags = [link.text for link in node.find('div', {'class': 'detail'}).find_all('a')]
+
+                # Not implemented in this stage #
                 photos = None
+                contact = None
+
                 about = ''
                 try:
                     about = node.find('div', {'class': re.compile('attractions-attraction-detail-about')}).text
                 except:
                     pass
-                contact = None
                 attraction = Attraction(
                     name=name,
                     rate=rate,
@@ -196,9 +198,8 @@ class AttractionParser(WebsiteParserBase):
         return None
 
     def extract_targets(self, node, article, current_url):  # Turn attr off for only restaurants
-        targets = []
-        # targets = [urljoin(current_url, tag['href']) for tag in node.findAll(href=re.compile('Attraction_Review'))]
-        # targets.extend([urljoin(current_url, tag['href']) for tag in node.findAll(href=re.compile('Attractions'))])
+        targets = [urljoin(current_url, tag['href']) for tag in node.findAll(href=re.compile('Attraction_Review'))]
+        targets.extend([urljoin(current_url, tag['href']) for tag in node.findAll(href=re.compile('Attractions'))])
         targets.extend([urljoin(current_url, tag['href']) for tag in node.findAll(href=re.compile('Restaurants'))])
         return targets
 
