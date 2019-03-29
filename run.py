@@ -4,7 +4,6 @@ from crawler.config import db
 from crawler.config.crawler import TRIPADVISOR_BASE_URL, TRIPADVISOR_PARSER_MAPPING
 from crawler.crawler import Crawler
 from crawler.downloader import HTMLDownloader
-from crawler.parse.tripadvisor import TripAdvisorParser, AttractionParser, RestaurantParser
 from crawler.store import MongoItemStore
 
 
