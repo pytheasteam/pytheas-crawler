@@ -2,7 +2,6 @@ import re
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
-
 from crawler.models import Attraction, Restaurant
 from crawler.parse.abstractions import WebsiteParserBase
 
@@ -161,13 +160,25 @@ class AttractionParser(WebsiteParserBase):
                 })
         return reviews_list
 
+    def _get_location(self, location_element):
+        try:
+            location_span = location_element.find_all('span')[1]
+            return {
+                'street': location_span.find('span', {'class': 'street-address'}).text.replace(', ', ''),
+                'locality': location_span.find('span', {'class': 'locality'}).text.replace(', ', ''),
+                'country': location_span.find('spna', {'class': 'country-name'}).text.replace(', ', '')
+            }
+        except IndexError:
+            return location_element.find('span', {'class': 'locality'}).text.replace(', ', '')
+
     def parse(self, node, url):
         if re.search('www.tripadvisor.com/Attraction_Review', url) is not None:
             try:
                 name = node.find('h1', {"id": "HEADING"}).text
                 rate = node.find('span', {'class': 'ui_bubble_rating'})['alt'].split(' ')[0]
                 ta_place = node.find('span', {'class': 'header_popularity'}).b.span.text.replace('#', '')
-                location = node.find('span', {'class': 'locality'}).text.replace(', ', '')
+                # location = node.find('span', {'class': 'locality'}).text.replace(', ', '')
+                location = self._get_location(node.find('span', {'class': 'address'}))
                 reviews = {
                     'number': node.find('a', {'class': 'seeAllReviews'}).text,
                     'reviews': self._parse_reviews(url)
