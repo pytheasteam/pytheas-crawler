@@ -1,7 +1,5 @@
 import logging
-
 import pymongo
-
 from crawler.abstractions import ItemsLoaderBase
 
 LOGGER = logging.getLogger(__name__)
