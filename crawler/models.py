@@ -35,7 +35,7 @@ class Review(ParsedItem):
 
 
 class Restaurant(ParsedItem):
-    def __init__(self, url, rate, name, ta_place, city, address=None, special_diets=None, features=None, cuisines=None, meals=None, photos=None, price=None):
+    def __init__(self, url, rate, name, ta_place, city, reviews, address=None, special_diets=None, features=None, cuisines=None, meals=None, photos=None, price=None):
         super().__init__(url)
         self.name = name
         self.ta_place = ta_place
@@ -49,5 +49,7 @@ class Restaurant(ParsedItem):
         self.meals = meals
         self.photos = photos
         self.price = price
+        self.reviews = reviews
+
 
 

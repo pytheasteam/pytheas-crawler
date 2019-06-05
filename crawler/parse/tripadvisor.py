@@ -2,6 +2,8 @@ import re
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
+
+from crawler.downloader import HTMLDownloader
 from crawler.models import Attraction, Restaurant
 from crawler.parse.abstractions import WebsiteParserBase
 
@@ -213,14 +215,13 @@ class RestaurantParser(WebsiteParserBase):
     def _get_details(self, node):
         details = {}
         details_table = node.find('div', {'class': 'restaurants-details-card-DetailsCard__innerDiv--1Imq5'})
-        details_table = details_table.findAll('div')[1].find('div').findAll('div', {'class': 'ui_column'})
-        about_section = details_table[0]
-        details['about'] = ''
         try:
+            details_table = details_table.findAll('div')[1].find('div').findAll('div', {'class': 'ui_column'})
+            about_section = details_table[0]
             details['about'] = about_section.find('div', {'class': 'restaurants-details-card-DesktopView__desktopAboutText--1VvQH'}).text
         except:
-            pass
-        for i in range(1, len(details_table)):
+            details_table = [node.find('div', {'class': 'restaurants-detail-overview-cards-DetailsSectionOverviewCard__detailsSummary--evhlS'})]
+        for i in range(len(details_table)):
             catagories = details_table[i].findAll('div')
             for catagory in catagories:
                 try:
@@ -230,6 +231,45 @@ class RestaurantParser(WebsiteParserBase):
                 except:
                     pass
         return details
+
+    def _get_all_reviews_pages(self, url, base_page):
+        comments_number = 1
+        try:
+            comments_number = base_page.find('div', {'class': 'pagination-details'}).find_all('b')[-1].text
+            comments_number = int(comments_number.replace(',', ''))
+            if comments_number > 1000:
+                comments_number = 1000
+        except Exception as e:
+            print(e)
+        all_pages = []
+        for i in range(0, comments_number, 10):
+            all_pages.append(url.replace('Reviews-', f'Reviews-or{i}-'))
+        return all_pages
+
+    def get_user_rate(self, url):
+        reviews_list = []
+        page = HTMLDownloader.download(url)
+        all_reviews_pages = self._get_all_reviews_pages(url, page)
+        for page_url in all_reviews_pages:
+            page_content = HTMLDownloader.download(page_url)
+            reviews = page_content.find_all('div', {'class': 'review-container'})
+            for review in reviews:
+                url = review.find('div', {'class': 'quote'}).a['href']
+                title = review.find('div', {'class': 'quote'}).a.span.text
+                rate = ''
+                reviewer = review.find('div', {'class': 'info_text'}).div.text
+                try:
+                    rate = review.find('span', {'class': 'ui_bubble_rating'})['class'][1]
+                    rate = re.findall('\d+', rate)[0]
+                except Exception as ex:
+                    pass
+                reviews_list.append({
+                    'url': url,
+                    'title': title,
+                    'rate': float(rate) / 10,
+                    'reviewer': reviewer
+                })
+        return reviews_list
 
     def parse(self, node, url):
         if re.search('www.tripadvisor.com/Restaurant_Review', url) is not None:
@@ -243,7 +283,12 @@ class RestaurantParser(WebsiteParserBase):
                     location = node.find('span', {'class': 'restaurants-detail-overview-cards-LocationOverviewCard__detailLinkText--co3ei'}).text
                 except:
                     pass
-                details = self._get_details(node)
+                details = ""
+                try:
+                    details = self._get_details(node)
+                except:
+                    pass
+                reviews = self.get_user_rate(url)
                 special_diets = details["special diets"] if "special diets" in details else None
                 features = details["features"] if "features" in details else None
                 cuisines = details["cuisines"] if "cuisines" in details else None
@@ -260,7 +305,8 @@ class RestaurantParser(WebsiteParserBase):
                     features=features,
                     cuisines=cuisines,
                     meals=meals,
-                    price=price
+                    price=price,
+                    reviews=reviews
                 )
                 return restaurant
             except Exception:

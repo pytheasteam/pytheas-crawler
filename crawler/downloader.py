@@ -21,7 +21,9 @@ class SeleniumHTMLDownloader(HTMLDownloaderBase):
 
 
 class HTMLDownloader(HTMLDownloaderBase):
-    def download(self, url):
+
+    @staticmethod
+    def download(url):
         html = request.urlopen(url).read()
         return BeautifulSoup(html, 'html.parser')
 

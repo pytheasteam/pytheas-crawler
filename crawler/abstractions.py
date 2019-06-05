@@ -9,8 +9,8 @@ from crawler.models import ParsedItem
 class HTMLDownloaderBase:
     __metaclass__ = ABCMeta
 
-    @abstractmethod
-    def download(self, url):
+    @staticmethod
+    def download(url):
         # type: (str) -> BeautifulSoup
         pass
 
